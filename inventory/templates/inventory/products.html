@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container-fluid mt-4 px-4">
+        <div class="d-flex justify-content-between mb-4">
+            <h2 class="text-primary">📦 Products Inventory</h2>
+            <a href="{% url 'home' %}" class="btn btn-secondary">⬅️ Back to Control Panel</a>
+        </div>
+        
+        <div class="row">
+            <!-- LEFT COLUMN: ADD NEW PRODUCT FORM -->
+            <div class="col-md-3">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white font-weight-bold">
+                        ➕ Add New Product
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            {% csrf_token %}
+                            {% for field in form %}
+                                <div class="mb-2">
+                                    <label class="form-label small text-muted">{{ field.label }}</label>
+                                    {{ field }}
+                                </div>
+                            {% endfor %}
+                            <button type="submit" class="btn btn-success w-100 mt-3">Save Product</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: SEARCH & DATA TABLE -->
+            <div class="col-md-9">
+                <!-- LIVE SEARCH BAR -->
+                <!-- LIVE SEARCH BAR & EXPORT BUTTON -->
+                <div class="mb-3 d-flex gap-2">
+                    <div class="input-group shadow-sm flex-grow-1">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Type to instantly filter by Name or SKU...">
+                        <button class="btn btn-primary" type="button">🔍 Search</button>
+                    </div>
+                    <a href="{% url 'export_products_csv' %}" class="btn btn-success shadow-sm text-nowrap">📥 Export CSV</a>
+                </div>
+
+                <!-- DATA TABLE -->
+                <div class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>Product Name</th>
+                                    <th>Supplier</th>
+                                    <th>Stock Level</th>
+                                    <th>Price</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                {% for item in products %}
+                                <tr class="{% if item.stock_quantity < 10 %}table-danger{% endif %}">
+                                    <td><span class="badge bg-secondary">{{ item.sku }}</span></td>
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.supplier.name }}</td>
+                                    <td>
+                                        {{ item.stock_quantity }}
+                                        {% if item.stock_quantity < 10 %}
+                                            <span class="badge bg-danger ms-2">Low Stock!</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>${{ item.price }}</td>
+                                    <td>
+                                        <!-- Edit button placeholder -->
+                                        <a href="{% url 'edit_product' item.pk %}" class="btn btn-warning btn-sm">✏️ Edit</a>
+                                        
+                                        <!-- Delete is only for Admins -->
+                                        {% if user.is_superuser %}
+                                        <form action="{% url 'delete_product' item.pk %}" method="POST" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
+                                        </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr id="emptyRow">
+                                    <td colspan="6" class="text-center py-4 text-muted">No products found!</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT FOR INSTANT LIVE SEARCH -->
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const tableBody = document.getElementById('tableBody');
+        const rows = tableBody.getElementsByTagName('tr');
+
+        searchInput.addEventListener('keyup', function() {
+            const filterValue = searchInput.value.toLowerCase();
+            for (let i = 0; i < rows.length; i++) {
+                if (rows[i].id === 'emptyRow') continue;
+                let skuText = rows[i].getElementsByTagName('td')[0].textContent.toLowerCase();
+                let nameText = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
+                
+                if (skuText.includes(filterValue) || nameText.includes(filterValue)) {
+                    rows[i].style.display = ""; 
+                } else {
+                    rows[i].style.display = "none"; 
+                }
+            }
+        });
+    </script>
+</body>
+</html>

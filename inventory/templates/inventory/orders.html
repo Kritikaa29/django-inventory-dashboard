@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Orders</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container-fluid mt-4 px-4">
+        <div class="d-flex justify-content-between mb-4">
+            <h2 class="text-primary">🛒 Incoming Orders</h2>
+            <a href="{% url 'home' %}" class="btn btn-secondary">⬅️ Back to Control Panel</a>
+        </div>
+        
+        <div class="row">
+            <!-- LEFT COLUMN: CREATE ORDER -->
+            <div class="col-md-3">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white font-weight-bold">
+                        ➕ Create Order
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            {% csrf_token %}
+                            {% for field in form %}
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted">{{ field.label }}</label>
+                                    {{ field }}
+                                </div>
+                            {% endfor %}
+                            <button type="submit" class="btn btn-primary w-100 mt-2">Place Order</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: ORDERS TABLE -->
+            <div class="col-md-9">
+                <div class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr>
+                                    <td class="fw-bold">#{{ order.id }}</td>
+                                    <td>{{ order.product.name }}</td>
+                                    <td>{{ order.quantity }} units</td>
+                                    <td>{{ order.order_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        {% if order.status == 'Pending' %}
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        {% elif order.status == 'Received' %}
+                                            <span class="badge bg-success">Received</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Cancelled</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">No orders placed yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
